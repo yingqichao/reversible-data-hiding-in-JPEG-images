@@ -29,6 +29,7 @@ public class ExtractScheme {
 	private char[] im;
 	private char[] proofreading;
 	private byte[] proof;
+	private String ret_str = new String();
 	
 	public ExtractScheme(String p,int c,byte[] pr){
 		char[] tt;char[] ts;
@@ -64,11 +65,12 @@ public class ExtractScheme {
 		im = Tool.byte2char(im1);
 	}
 	
-	public List<String> extract(){
-		int Qt = Q[0][0];
+	public List<Object> extract(){
+		int Qt = Q[0][0];char[] DCcode;
 		ArrayList res;int[][] DCT;int flag = 0;int[] DC0 = new int[3];String a = new String();
-		String temp;int length = 0;boolean ex = false;int Bpp = 0;char[] cmp;
+		String temp;int length = Integer.MAX_VALUE;int Bpp = 0;char[] cmp;//boolean ex = false;
 		row=(int)Math.ceil((double)size[0]/8/Qt);col=(int)Math.ceil((double)size[1]/8/Qt);
+		int RSTlocation;int[] RST = new int[100];int loc_ind = 0;
 		for (int j = 0; j < row; j += 1) {
 			for (int k = 0; k < col; k += 1) {
 				//Y
@@ -76,11 +78,29 @@ public class ExtractScheme {
 					res = DCTread(im,flag,treeSelect[0],DC0[0],j+1,k+1,zy);
 					DCT = (int[][]) res.get(0);DC0[0] = DCT[0][0];
 					flag += (int) res.get(1);
-					res = dataExtract(DCT,Bpp);
-					if(j==0 && k==0 && zy==1){Bpp = (int)res.get(1);length = ((int)res.get(2))*8;}//??????????????????
-					temp = (String)res.get(0);
-					a = a.concat(temp);
-					if(a.length()>=length) {ex=true;break;}
+					DCcode = (char[]) res.get(2);
+					//Modified
+					if(a.length()<length) {
+						res = dataExtract(DCT, Bpp);
+						if (j == 0 && k == 0 && zy == 1) {
+							Bpp = (int) res.get(1);
+							length = ((int) res.get(2)) * 8;
+						}//??????????????????
+						temp = (String) res.get(0);
+						a = a.concat(temp);
+					}
+					//if(a.length()>=length) {ex=true;break;}
+					//Recoding to recover the original image
+					res = Recode(0,DCT,treeSelect[0],DCcode,j+1,k+1,ret_str,0);
+//					ret_len = ((String)res.get(0)).length();
+					if(j==0 && k==0 && zy==1)
+						ret_str=(String)res.get(0);
+					else
+						ret_str = ret_str.concat((String)res.get(0));
+					//						payload = (int)res.get(1);
+					RSTlocation = (int)res.get(2);
+					if(RSTlocation !=0) {RST[loc_ind] = RSTlocation;loc_ind++;}
+
 				}
 				//CrCb
 				if (color==3){
@@ -89,28 +109,126 @@ public class ExtractScheme {
 						res = DCTread(im,flag,treeSelect[zz],DC0[zz],j+1,k+1,0);
 						DCT = (int[][]) res.get(0);DC0[zz] = DCT[0][0];
 						flag += (int) res.get(1);
-						res = dataExtract(DCT,Bpp);
-						temp = (String)res.get(0);
-						a = a.concat(temp);
-						if(a.length()>=length) {ex=true;break;}
+						DCcode = (char[]) res.get(2);
+						//Modified
+						if(a.length()<length) {
+							res = dataExtract(DCT, Bpp);
+							temp = (String) res.get(0);
+							a = a.concat(temp);
+						}
+						//if(a.length()>=length) {ex=true;break;}
+						//Recoding to recover the original image
+						res = Recode(0,DCT,treeSelect[zz],DCcode,j+1,k+1,ret_str,0);
+						ret_str = ret_str.concat((String)res.get(0));
+//						payload = (int)res.get(1);
+						RSTlocation = (int)res.get(2);
+						if(RSTlocation !=0) {RST[loc_ind] = RSTlocation;loc_ind++;}
+
 					}
 				}
-				if(ex==true) break;
+				//if(ex==true) break;
 			}
-			if(ex==true) break;
+			//if(ex==true) break;
 		}
 		//????16λ
 
-		cmp = Tool.charcmp(Tool.str2char(a),proofreading);
-		int first = Tool.indexOfChar_1(cmp,49);
-		
-		a = a.substring(16,a.length());
-		dubious = Tool.str2byte(a);
+//		cmp = Tool.charcmp(Tool.str2char(a),proofreading);
+//		int first = Tool.indexOfChar_1(cmp,49);
+//
+//		a = a.substring(16,a.length());
+//		dubious = Tool.str2byte(a);
+
+		byte[] ret = Tool.str2byte_control(ret_str,RST);
+
 //		recoverPath = savePic(dubious);
 		List<String> secret_data = stream2String(dubious);
+
+		List<Object> list = new ArrayList<>();
+		list.add(ret);list.add(secret_data);
 		
-		return secret_data;
+		return list;
 		
+	}
+
+	public ArrayList Recode(Integer payload,int[][] DCT,int select,char[] DCcode,int r,int c,String emb,int Qnum){
+		//?????DCT??????????DCT??????????
+		int[][] ac = null;ArrayList res = new ArrayList(2);String a = new String();int runLength = 0;int codeLength = 0;
+		int runCode = 0;char[] huffcode;int index;char[] code;String temp;int RSTlocation = 0;
+		int[][] newDCT;
+
+		newDCT = DCT;
+
+		//重新编码
+		if( DRI!=0 && ((r-1)*col+c-1)!=0 && ((r-1)*col+c-1)%DRI==0 && (select==0 || select==1) && Qnum == 1){
+			if(emb.length()%8!=0){
+				for(int i=0;i<8-emb.length()%8;i++){
+					a=a+(char)49;
+				}
+			}
+			RSTlocation = (emb.length()+a.length())/8;
+			temp = Tool.int2str(255);temp = temp.concat(Tool.int2str(208+(r-2)%8));
+
+			a=a.concat(temp);
+		}
+
+//		if(r==1 && c==1 && (select==0 || select==1) && Qnum == 1){payload += 48*Bpp;}
+//		else{payload += 49*Bpp;}
+
+		switch(select){
+			case(0):ac = a0;break;
+			case(1):ac = a1;break;
+			case(16):ac = a0;break;
+			case(17):ac = a1;break;
+		}
+		//???????????
+		for (int i=0;i<DCcode.length;i++){
+			a = a + DCcode[i];
+		}
+		//????????
+		for(int j=1;j<64;j++){
+			//?????γ????
+			if (newDCT[zigzag[j][0]][zigzag[j][1]]==0){
+				runLength += 1;
+				if(runLength==16){
+					index = Tool.indexOf_1(ac[2],16*15);
+					huffcode = Tool.int2bit(ac[1][index],ac[0][index]);
+					for(int y=0;y<huffcode.length;y++){
+						a = a + huffcode[y];
+					}
+					runLength = 0;
+				}
+			}
+			else{
+				codeLength = Tool.howManyBits(newDCT[zigzag[j][0]][zigzag[j][1]]);runCode = runLength*16 + codeLength;
+				index = Tool.indexOf_1(ac[2],runCode);
+				huffcode = Tool.int2bit(ac[1][index],ac[0][index]);
+				code = Tool.int2bit(Tool.signDecoder(newDCT[zigzag[j][0]][zigzag[j][1]],codeLength),codeLength);
+				for(int y=0;y<huffcode.length;y++){
+					a = a + huffcode[y];
+				}
+				for(int z=0;z<code.length;z++){
+					a = a + code[z];
+				}
+				runLength = 0;
+			}
+			//?ж????????DCT????????γ????
+			if(j==63 && runLength!=0){
+				index = Tool.indexOf_1(ac[2],0);
+				huffcode = Tool.int2bit(ac[1][index],ac[0][index]);
+				for(int y=0;y<huffcode.length;y++){
+					a = a + huffcode[y];
+				}
+			}
+		}
+		res.add(a);//编码后的码字
+		//???
+//		check = DCTread(T.str2char(a),0,select, 0,0,0);
+//		DCTcmp = (int[][]) check.get(0);
+//		test = T.twoDimensionalEqual(DCTcmp,newDCT);
+//		assert(test==true);
+		res.add(payload);//嵌入了多少bit
+		res.add(RSTlocation);//是否重置
+		return res;
 	}
 
 	public static List<String> stream2String(byte[] buff){
@@ -154,10 +272,15 @@ public class ExtractScheme {
 		if(bpp==0){bpp=D[7][7];last = 63;}
 		for(int i=1;i<last;i++){
 			b = D[zigzag[i][0]][zigzag[i][1]];
-			if(b==0||b>2||b<-2)	continue;
+			if(b==0||b>2||b<-2){
+				if(b>2)	D[zigzag[i][0]][zigzag[i][1]] = D[zigzag[i][0]][zigzag[i][1]]-1;
+				else if(b<-2)	D[zigzag[i][0]][zigzag[i][1]] = D[zigzag[i][0]][zigzag[i][1]]+1;
+			}
 			else{
-				//提取隐藏
+				//提取隐藏并恢复
 				temp.append((b==2||b==-2)?1:0);
+				if(b==2) D[zigzag[i][0]][zigzag[i][1]] = 1;
+				if(b==-2)	D[zigzag[i][0]][zigzag[i][1]] = -1;
 			}
 		}
 		res.add(temp.toString());

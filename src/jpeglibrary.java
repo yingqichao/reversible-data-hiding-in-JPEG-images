@@ -59,7 +59,7 @@ public class jpeglibrary {
 		if (color==3) sos(head,d2);//Selection of Huffman Tree for three color channels.
 	}
 	
-	public List<String> hide(){
+	public String hide(String foldname){
 		byte[] emb_im;
 		int Qt = Q[0][0];
 		HideScheme2 hide = new HideScheme2(im1,d0,d1,a0,a1,treeSelect,size,color,DRI,Qt);
@@ -70,10 +70,19 @@ public class jpeglibrary {
 		System.arraycopy(emb_im, 0, dubious, head.length, emb_im.length);
 		System.arraycopy(eoi, 0, dubious, head.length+emb_im.length, 2);
 
-		hidePath = savePic(dubious);
+		hidePath = savePic(dubious,foldname,w);
 		
+//		ExtractScheme exd = new ExtractScheme(hidePath,3,water);//water is just for proofreading!
+//		List<String> res = exd.extract();
+//		return res;
+		return hidePath;
+	}
+
+	public List<String> extract(String hidePath,String foldname){
 		ExtractScheme exd = new ExtractScheme(hidePath,3,water);//water is just for proofreading!
-		List<String> res = exd.extract();
+		List<Object> list = exd.extract();
+		String path = savePic((byte[])list.get(0),foldname,"recover");
+		List<String> res = (List<String>)list.get(1);
 		return res;
 	}
 	
@@ -91,8 +100,8 @@ public class jpeglibrary {
 		return outStream.toByteArray();  
 	}
 	
-	private String savePic(byte[] b) {
-		String path = "C:\\Users\\yqc_s\\Desktop\\myjpeg0105final\\jpeg\\".concat(im).concat("_").concat(w).concat(".jpg");
+	private String savePic(byte[] b,String foldname,String filename) {
+		String path = foldname.concat(im).concat("_").concat(filename).concat(".jpg");
 		OutputStream out;
 		try {
 			out = new FileOutputStream(new File(path));

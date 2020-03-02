@@ -49,7 +49,7 @@ public class HideScheme2 {
 		System.arraycopy(ts, 0, water, 0, 16);
 		System.arraycopy(tt, 0, water, 16,tt.length);
 
-		String buff;
+//		String buff;
 		block=(row*Q)*(col*Q);
 		//??????????????15??DCT,?????49λ??????DCT(????????0)
 //		nz = nonZeros(im);//????????DCT????????
@@ -63,6 +63,10 @@ public class HideScheme2 {
 					flag += (int) res.get(1);
 					DC0[0] = DCT[0][0];
 					DCcode = (char[]) res.get(2);
+					if (ex==false){
+//					//这里修改DCT系数，下面都是重新编码
+						DCT = DCTembed(DCT,water,payload,j+1,k+1,treeSelect[0],zy);
+					}
 					res = embeddedData(water,payload,DCT,treeSelect[0],DCcode,ex,j+1,k+1,ret_str,zy);
 					if(j==0 && k==0 && zy==1) 
 						{ret_len=((String)res.get(0)).length();
@@ -84,6 +88,10 @@ public class HideScheme2 {
 					flag += (int) res.get(1);
 					DC0[zz] = DCT[0][0];
 					DCcode = (char[]) res.get(2);
+					if (ex==false){
+//					//这里修改DCT系数，下面都是重新编码
+						DCT = DCTembed(DCT,water,payload,j+1,k+1,treeSelect[0],zz);
+					}
 					res = embeddedData(water,payload,DCT,treeSelect[zz],DCcode,ex,j+1,k+1,ret_str,0);
 					ret_len = ((String)res.get(0)).length();
 					ret_str = ret_str.concat((String)res.get(0));
@@ -102,16 +110,16 @@ public class HideScheme2 {
 		//?????DCT??????????DCT??????????
 		int[][] ac = null;ArrayList res = new ArrayList(2);String a = new String();int runLength = 0;int codeLength = 0;
 		int runCode = 0;char[] huffcode;int index;char[] code;String temp;int RSTlocation = 0;
-		ArrayList check = new ArrayList();
-		int[][] newDCT;int[][] DCTcmp;
-		
+		int[][] newDCT;
 		//????????????DCT?????????
-		if (ex==false){
-			//这里修改DCT系数，下面都是重新编码
-			newDCT = DCTembed(DCT,w,payload,r,c,select,Qnum);}
-		else {newDCT=DCT;}
+//		if (ex==false){
+//			//这里修改DCT系数，下面都是重新编码
+//			newDCT = DCTembed(DCT,w,payload,r,c,select,Qnum);}
+//		else {newDCT=DCT;}
+
+		newDCT = DCT;
 		
-		//?????????
+		//重新编码
 		if( DRI!=0 && ((r-1)*col+c-1)!=0 && ((r-1)*col+c-1)%DRI==0 && (select==0 || select==1) && Qnum == 1){
 		 if(emb.length()%8!=0){
 			for(int i=0;i<8-emb.length()%8;i++){
@@ -128,10 +136,10 @@ public class HideScheme2 {
 //		else{payload += 49*Bpp;}
 		
 		switch(select){
-		case(0):ac = a0;break;
-		case(1):ac = a1;break;
-		case(16):ac = a0;break;
-		case(17):ac = a1;break;
+			case(0):ac = a0;break;
+			case(1):ac = a1;break;
+			case(16):ac = a0;break;
+			case(17):ac = a1;break;
 		}
 		//???????????
 		for (int i=0;i<DCcode.length;i++){
@@ -173,14 +181,14 @@ public class HideScheme2 {
 				}
 			}
 		}
-		res.add(a);
+		res.add(a);//编码后的码字
 		//???
 //		check = DCTread(T.str2char(a),0,select, 0,0,0);
 //		DCTcmp = (int[][]) check.get(0);
 //		test = T.twoDimensionalEqual(DCTcmp,newDCT);
 //		assert(test==true);
-		res.add(payload);
-		res.add(RSTlocation);
+		res.add(payload);//嵌入了多少bit
+		res.add(RSTlocation);//是否重置
 		return res;
 	}
 

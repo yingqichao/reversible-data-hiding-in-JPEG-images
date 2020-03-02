@@ -12,7 +12,9 @@ public class img {
 
 		
 		jpeglibrary a = new jpeglibrary("Ladybug300","water.txt",3);
-		List<String> result = a.hide();
+		String foldname = "E:/";
+		String hidePath = a.hide(foldname);
+		List<String> result = a.extract(hidePath,foldname);
 
 		System.out.println("------------------------");
 		System.out.println("Ó¢ÎÄ²Î¿¼£º "+result.get(0));
