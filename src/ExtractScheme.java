@@ -457,8 +457,9 @@ public class ExtractScheme {
 	    public void hfm(byte[] x,int[][] d){
 	    	//?????§Ø??DHT???,?????????????§Ô???1???
 	      ArrayList res =Tool.indexOf(d[0],196);int thisLength;int pointer;int pointerOrigin;
-	      int a;int huffLength = 0;
+	      int a;
 	      for(int z=0;z<res.size();z++){
+	      	int huffLength = 0;
 	    	a=(int) res.get(z);
 	    	pointer = d[1][a];pointerOrigin = d[1][a]+2;//please follow the straight-forward moving of this pointer
 	    	thisLength = Tool.unsignDecoder(x[pointer+2])*256+Tool.unsignDecoder(x[pointer+3]);

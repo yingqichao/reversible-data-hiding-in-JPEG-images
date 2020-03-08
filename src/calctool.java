@@ -214,6 +214,15 @@ public class calctool {
 		
 		return str;
 	}
+
+	public char[] byte2char_new(byte[] f){
+		char[] str = new char[f.length];
+		for(int i=0;i<f.length;i++){
+			str[i] = (char)(f[i]+'0');
+		}
+
+		return str;
+	}
 	
 	public int[] huffmanDecoder(char[] f,int flag,int[][] tree,int row,int col){
 		//���ݹ���������Ѱ�����ֶ�Ӧ��Ȩ����λ��
