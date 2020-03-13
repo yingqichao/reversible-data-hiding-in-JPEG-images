@@ -379,19 +379,21 @@ public class ExtractScheme {
 
 	private void dataExtract(){
 		char a;int b;
+        //系数小于0不动，等于0的话嵌入信息，大于0的右移1
 		if(Bpp==0)
 			Bpp=coeff[zigZag[startCoeff-1][0]][zigZag[startCoeff-1][1]];
 		for(int i=startCoeff;i<64;i++){
 			b = coeff[zigZag[i][0]][zigZag[i][1]];
-			if(b==0||b>2||b<-2){
-				if(b>2)	coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
-				else if(b<-2)	coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
+			if(b>=2 || b<0){
+				if(b>=2)
+				    coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
+//				else if(b<-2)	coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
 			}
 			else{
 				//提取隐藏并恢复
-				temp.append((b==2||b==-2)?1:0);
-				if(b==2) coeff[zigZag[i][0]][zigZag[i][1]] = 1;
-				if(b==-2)	coeff[zigZag[i][0]][zigZag[i][1]] = -1;
+				temp.append((b==1)?1:0);
+				if(b==1) coeff[zigZag[i][0]][zigZag[i][1]] = 0;
+//				if(b==-2)	coeff[zigZag[i][0]][zigZag[i][1]] = -1;
 			}
 //			b = Math.abs(coeff[zigZag[i][0]][zigZag[i][1]]);
 //			for(int j=0;j<Bpp;j++){

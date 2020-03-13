@@ -259,6 +259,7 @@ public class HideScheme2 {
 	}
 
 	private int[][] DCTembed(byte[] embed,int payload,int r,int c,int select,int Qnum){
+		//系数小于0不动，等于0的话嵌入信息，大于0的右移1
 		int[][] res = new int[8][8];
 		int temp;int LSB;
 		for(int i=0;i<64;i++){
@@ -274,23 +275,29 @@ public class HideScheme2 {
 //					LSB += tmp * Math.pow(2, j);//低位在前
 //				}
 //				res[zigZag[i][0]][zigZag[i][1]] += (temp>=0)?LSB:-LSB;
-				if(temp==0)	continue;
-				else if(temp==1||temp==-1){
+				if(temp<0){
+					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]];
+				}
+				else if(temp==0) {//temp==1||temp==-1
 					//信息隐藏
-					LSB = 0;int dig1 = payload/8;int dig2 = payload%8;
-					for(int j=0;j<Bpp;j++){
-						if (payload>=embed.length*8)
+					LSB = 0;
+					int dig1 = payload / 8;
+					int dig2 = payload % 8;
+					for (int j = 0; j < Bpp; j++) {
+						if (payload >= embed.length * 8)
 							break;
-						LSB += (embed[dig1] >> (7-dig2)) & 0x01;
+						LSB += (embed[dig1] >> (7 - dig2)) & 0x01;
 						payload++;
 					}
-					res[zigZag[i][0]][zigZag[i][1]] += (coeff[zigZag[i][0]][zigZag[i][1]]>0)?LSB:-LSB;
-					if (payload>=embed.length*8)
+					res[zigZag[i][0]][zigZag[i][1]] += LSB;
+					if (payload >= embed.length * 8)
 						break;
-				}else if(temp<0){
-					//左移
-					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
-				}else{
+				}
+//				}else if(temp<0){
+//					//左移
+//					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
+//				}
+				else{
 					//右移
 					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
 				}
