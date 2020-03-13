@@ -1,6 +1,9 @@
+import sun.awt.image.ImageWatched;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class jpeglibrary {
@@ -54,7 +57,7 @@ public class jpeglibrary {
 		key = password;selfie = fromPhoto;doodle = fromByteData;aux = auxInfo;
 		operation();
 		long endTime=System.currentTimeMillis();
-		System.out.println("Preparation运行时间： "+(endTime-startTime)+"ms");
+//		System.out.println("Preparation运行时间： "+(endTime-startTime)+"ms");
 	}
 
 	private void operation() {
@@ -121,11 +124,23 @@ public class jpeglibrary {
 	}
 
 	public List<String> extract(String hidePath,String foldname){
-		ExtractScheme exd = new ExtractScheme(hidePath,3,water);//water is just for proofreading!
-		List<Object> list = exd.extract();
-		String path = savePic((byte[])list.get(0),foldname,"recover");
-		List<String> res = (List<String>)list.get(1);
-		return res;
+		int password = 0;
+		ExtractScheme exd = new ExtractScheme(hidePath,3);
+		List<byte[]> list = exd.extract(password);
+		String path = savePic((byte[])list.get(1),foldname,"recover");
+		byte[] extract = (byte[])list.get(0);
+		int imgLen = toLength(Arrays.copyOfRange(extract,1,4));
+		int wordLen = extract[4]&(0xff);int auxLen = extract[5]&(0xff);
+		dubious = Arrays.copyOfRange(extract,6,6+imgLen);
+//                hidePath[numIm] = SavePicIntoSystemAlbum(Arrays.copyOfRange(dubious, 0, dubious.length), "recover");
+		word = Arrays.copyOfRange(extract,6+imgLen,6+imgLen+wordLen);
+		String wordex = new String(word);
+
+		List<String> ans = new LinkedList<>();
+		//返回值：水印信息+恢复出来的原始图像保存路径
+		ans.add(wordex);ans.add(path);
+//		List<String> res = (List<String>)list.get(1);
+		return ans;
 	}
 
 	public static byte[] readStream(String a) throws Exception{
@@ -144,7 +159,7 @@ public class jpeglibrary {
 	}
 
 	private String savePic(byte[] b,String foldname,String filename) {
-		String path = foldname.concat(foldname).concat("//").concat(filename).concat(".jpg");
+		String path = foldname.concat("\\").concat(filename);
 		OutputStream out;
 		try {
 			out = new FileOutputStream(new File(path));
@@ -340,6 +355,17 @@ public class jpeglibrary {
 	//----------Tool Function Repository--------------
 	//Latest revision:2018/10/5
 	//Several functions from calctool.java has been deprecated and removed.
+
+
+	private int toLength(byte[] in){
+		int res = 0;
+		for(int i=0;i<3;i++){
+			res <<= 8;
+			int tmp = in[i]&(0xff);
+			res += tmp;
+		}
+		return res;
+	}
 
 	private int byte2int(int in){
 		if(in<0) return 256+in;

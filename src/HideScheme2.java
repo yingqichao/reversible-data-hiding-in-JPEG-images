@@ -42,7 +42,7 @@ public class HideScheme2 {
 	long embeddingData = 0;
 	long loadingData = 0;
 	private int OriBpp;
-	private int startCoeff = 24;
+	private int startCoeff = 18;
 
 	public HideScheme2(byte[] f,int[][] D0,int[][] D1,int[][] A0,int[][] A1,int[][] newA0,int[][] newA1,int[] tr,int[] s,int c,int dri,int Qt,int password){
 		long startTime=System.currentTimeMillis();
@@ -284,15 +284,15 @@ public class HideScheme2 {
 						LSB += (embed[dig1] >> (7-dig2)) & 0x01;
 						payload++;
 					}
-					coeff[zigZag[i][0]][zigZag[i][1]] += (coeff[zigZag[i][0]][zigZag[i][1]]>0)?LSB:-LSB;
+					res[zigZag[i][0]][zigZag[i][1]] += (coeff[zigZag[i][0]][zigZag[i][1]]>0)?LSB:-LSB;
 					if (payload>=embed.length*8)
 						break;
 				}else if(temp<0){
 					//×óÒÆ
-					coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
+					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
 				}else{
 					//ÓÒÒÆ
-					coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
+					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
 				}
 			}
 //			else{

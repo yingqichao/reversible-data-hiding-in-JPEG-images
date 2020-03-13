@@ -398,10 +398,10 @@ public class calctool {
 		}
 		return b;
 	}
-	public int str2int(String a,int num){
-		int res = 0;
+	public int str2int(String a){
+		int res = 0;int num = a.length();
 		for(int i=0;i<num;i++){
-			if(a.charAt(i)==49) res+=Math.pow(2,num-1-i);
+			if(a.charAt(i)=='1') res+=Math.pow(2,num-1-i);
 		}
 		return res;
 	}
