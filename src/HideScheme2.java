@@ -87,8 +87,10 @@ public class HideScheme2 {
 		// w/ts:image bytes and its length(3Byte);word/ws:message bytes and its length(1Byte);     -------4Byte
 //		char[] tt = null;char[] ts = null;char[] wt = null;char[] ws = null;
 		block1 = new byte[4];
-		block1[0] = (byte)mode;//check
-		System.arraycopy(int2byte(key,3), 0, block1, 1, 3);//keystr
+//		block1[0] = (byte)mode;//check
+//		System.arraycopy(int2byte(key,3), 0, block1, 1, 3);//keystr
+		//原始文件长度
+		System.arraycopy(int2byte(im.length,4), 0, block1, 0, 4);
 		block2 = new byte[5];
 		System.arraycopy(int2byte((w!=null)?w.length:0,3),0,block2,0,3);
 		block2[3] = (byte)((word!=null)?word.length:0);
@@ -416,7 +418,7 @@ public class HideScheme2 {
 	private byte[] int2byte(int in,int len){
 		byte[] res = new byte[len];
 		for (int n = 0; n < len; n++)
-			res[len-1-n] = (byte) (in>>> (n * 8));
+			res[len-1-n] = (byte) ((in>>> (n * 8))&0xFF);
 		return res;
 	}
 

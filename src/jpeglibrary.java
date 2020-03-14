@@ -127,14 +127,15 @@ public class jpeglibrary {
 		int password = 0;
 		ExtractScheme exd = new ExtractScheme(hidePath,3);
 		List<byte[]> list = exd.extract(password);
+		//恢复图像
 		String path = savePic((byte[])list.get(1),foldname,"recover");
 		byte[] extract = (byte[])list.get(0);
 		int imgLen = toLength(Arrays.copyOfRange(extract,1,4));
 		int wordLen = extract[4]&(0xff);int auxLen = extract[5]&(0xff);
 		dubious = Arrays.copyOfRange(extract,6,6+imgLen);
 //                hidePath[numIm] = SavePicIntoSystemAlbum(Arrays.copyOfRange(dubious, 0, dubious.length), "recover");
-		word = Arrays.copyOfRange(extract,6+imgLen,6+imgLen+wordLen);
-		String wordex = new String(word);
+		byte[] wordExtract = Arrays.copyOfRange(extract,6+imgLen,6+imgLen+wordLen);
+		String wordex = new String(wordExtract);
 
 		List<String> ans = new LinkedList<>();
 		//返回值：水印信息+恢复出来的原始图像保存路径
@@ -159,7 +160,7 @@ public class jpeglibrary {
 	}
 
 	private String savePic(byte[] b,String foldname,String filename) {
-		String path = foldname.concat("\\").concat(filename);
+		String path = foldname.concat("\\").concat(filename).concat(".jpg");
 		OutputStream out;
 		try {
 			out = new FileOutputStream(new File(path));

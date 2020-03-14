@@ -1,3 +1,4 @@
+import javax.print.DocFlavor;
 import java.io.*;
 import java.util.*;
 
@@ -24,7 +25,8 @@ public class ExtractScheme {
 	private int Bpp = 0;
 	private int[][] zigZag;
 	private int key;
-	private StringBuilder temp;
+	private StringBuilder temp = new StringBuilder();
+	private StringBuilder image_temp = new StringBuilder();
 	private String DCcode;
 	private int[][] coeff;
 	private int[] DC0 = new int[3];
@@ -104,8 +106,8 @@ public class ExtractScheme {
 						finale_pointer += dataWriter(finale_pointer);
 					}
 					//重编码以恢复原始图像
-					Recode(temp,treeSelect[0],j+1,k+1,zy,preprocess);
-					moveForward = dataWriterForOriginalImage(finale_pointer,preprocess);
+					Recode(image_temp,treeSelect[0],j+1,k+1,zy,preprocess);
+					moveForward = dataWriterForOriginalImage(finale_pointer_image,preprocess);
 					finale_pointer_image += moveForward;
 
 				}
@@ -125,8 +127,8 @@ public class ExtractScheme {
 							finale_pointer += dataWriter(finale_pointer);
 						}
 						//重编码以恢复原始图像
-						Recode(temp,treeSelect[0],j+1,k+1,zz,false);
-						moveForward = dataWriterForOriginalImage(finale_pointer,false);
+						Recode(image_temp,treeSelect[0],j+1,k+1,zz,false);
+						moveForward = dataWriterForOriginalImage(finale_pointer_image,false);
 						finale_pointer_image += moveForward;
 
 					}
@@ -134,19 +136,26 @@ public class ExtractScheme {
 			}
 		}
 
-		//保存原图
+		//编码剩余的比特
 		if(temp.length()!=0){
 			int len = temp.length();
 			for(int i=0;i<8-len;i++){
 				temp.append('1');
 			}
-			finale_pointer += dataWriterForOriginalImage(finale_pointer_image,false);
+			finale_pointer += dataWriter(finale_pointer);
+		}
+		if(image_temp.length()!=0){
+			int len = image_temp.length();
+			for(int i=0;i<8-len;i++){
+				image_temp.append('1');
+			}
+			finale_pointer_image += dataWriterForOriginalImage(finale_pointer_image,false);
 		}
 
-		finale[finale_pointer]=(byte)255;finale_pointer++;
-		finale[finale_pointer]=(byte)217;finale_pointer++;
+		finale[finale_pointer_image]=(byte)255;finale_pointer_image++;
+		finale[finale_pointer_image]=(byte)217;finale_pointer_image++;
 
-		byte[] ori_image_data = Arrays.copyOfRange(finale, 0, finale_pointer);
+		byte[] ori_image_data = Arrays.copyOfRange(finale, 0, finale_pointer_image);
 
 		List<byte[]> list = new LinkedList<>();
 		//这里的dubious是隐藏的信息，list：隐藏的信息+原图的byte[]
@@ -341,14 +350,14 @@ public class ExtractScheme {
 		//converts the global StringBuilder temp into bytes and store them into finale
 		long startTime=System.currentTimeMillis();
 		int moveForward = 0;int res;
-		while(temp.length()>=8){
-			res = String2int(temp.substring(0,8));
+		while(image_temp.length()>=8){
+			res = String2int(image_temp.substring(0,8));
 			finale[finale_pointer+moveForward] = (byte)res;
-			temp.delete(0, 8);
+			image_temp.delete(0, 8);
 			moveForward++;
 			if(finale[finale_pointer+moveForward-1]==-1) //也就是byte里的255
 			{
-				if(preprocess && String2int(temp.substring(0,8))>=208 && String2int(temp.substring(0,8))<=215){
+				if(preprocess && String2int(image_temp.substring(0,8))>=208 && String2int(image_temp.substring(0,8))<=215){
 					preprocess=false;
 				}else{
 					finale[finale_pointer+moveForward]=0;moveForward++;
@@ -410,15 +419,22 @@ public class ExtractScheme {
 				return;
 			}
 
-			mode = String2int(temp.substring(0,8));
-			int keyExtracted = String2int(temp.substring(8,32));
-			if(keyExtracted!=key){//Wrong Keyword
-				ex = true;dubious = new byte[1];
-				temp.setLength(0);temp.append("11111101");//indicates 253-Wrong Keyword.
-				return;
-			}
+//			mode = String2int(temp.substring(0,8));
+//			int keyExtracted = String2int(temp.substring(8,32));
+//			if(keyExtracted!=key){//Wrong Keyword
+//				ex = true;dubious = new byte[1];
+//				temp.setLength(0);temp.append("11111101");//indicates 253-Wrong Keyword.
+//				return;
+//			}
+			mode = 254;//仅文字模式
+
+			int keyExtracted = String2int(temp.substring(0,32));
+
+			//开finale空间，存原始文件
+			finale = new byte[keyExtracted];
 
 			temp.setLength(0);temp.append("11111111");//indicates 255-Complete.
+			image_temp.setLength(0);
 
 		}else if(!block2Extracted){
 			//get Information and clear temp
@@ -426,7 +442,7 @@ public class ExtractScheme {
 			totalLen = 6 + String2int(temp.substring(8,32));
 			totalLen += String2int(temp.substring(32,40));
 			totalLen += String2int(temp.substring(40,48));
-
+			//这里初始化长度
 			dubious = new byte[6+totalLen];
 
 			temp.setLength(48);
