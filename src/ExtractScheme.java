@@ -154,12 +154,14 @@ public class ExtractScheme {
 
 		finale[finale_pointer_image]=(byte)255;finale_pointer_image++;
 		finale[finale_pointer_image]=(byte)217;finale_pointer_image++;
-
-		byte[] ori_image_data = Arrays.copyOfRange(finale, 0, finale_pointer_image);
+		byte[] ori_data = new byte[head.length+finale.length];
+		System.arraycopy(head, 0, ori_data, 0, head.length);
+		System.arraycopy(finale, 0, ori_data, head.length, finale.length);
+//		byte[] ori_image_data = Arrays.copyOfRange(finale, 0, finale_pointer_image);
 
 		List<byte[]> list = new LinkedList<>();
 		//这里的dubious是隐藏的信息，list：隐藏的信息+原图的byte[]
-		list.add(dubious);list.add(ori_image_data);
+		list.add(dubious);list.add(ori_data);
 
 		long endTime=System.currentTimeMillis();
 		System.out.println("提取信息总运行时间： "+(endTime-startTime)+"ms");

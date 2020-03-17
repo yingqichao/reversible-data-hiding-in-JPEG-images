@@ -26,6 +26,7 @@ public class HideScheme2 {
 	private int key;
 	private String DCcode;
 	private int[][] coeff;
+	private int[][] newDCT;
 	private int[] DC0 = new int[3];
 	private Map<Integer,Integer> d0 = new HashMap<>();
 	private Map<Integer,Integer> d1 = new HashMap<>();
@@ -124,7 +125,7 @@ public class HideScheme2 {
 					pointer = DCTread(pointer,0,preprocess);//great modification
 
 					newEmbedded = embeddedData(payload,temp,treeSelect[0],ex,j+1,k+1,zy,preprocess);//固定值6
-					payload += newEmbedded;
+					payload = newEmbedded;
 					moveForward = dataWriter(finale_pointer,preprocess);
 					finale_pointer += moveForward;
 					ex = payload>(water.length)*8;
@@ -135,7 +136,7 @@ public class HideScheme2 {
 						pointer = DCTread(pointer,zz,false);
 
 						newEmbedded = embeddedData(payload,temp,treeSelect[zz],ex,j+1,k+1,0,false);
-						payload += newEmbedded;
+						payload = newEmbedded;
 						moveForward = dataWriter(finale_pointer,false);
 						finale_pointer += moveForward;
 						ex = payload>(water.length)*8;
@@ -184,23 +185,22 @@ public class HideScheme2 {
 		return moveForward;
 	}
 
-	private int embeddedData(int payload,StringBuilder emb,int select,boolean ex,int r,int c,int Qnum,boolean pre){
+	private int embeddedData(Integer payload,StringBuilder emb,int select,boolean ex,int r,int c,int Qnum,boolean pre){
 		//modify DCT，and return new code of the new DCT.
 		long startTime=System.currentTimeMillis();
 		Map<Integer,Integer> acrev;int runLength = 0;int codeLength;int res;
 		int runCode;int huffCode;String code ;String temp ;
-		int[][] newDCT;
 
 		//嵌入完毕后，按之前的DCT来嵌入数据
 		if(!ex){
 			if(!block1Embedded){
-				newDCT = DCTembed(block1,payload,r,c,select,Qnum);res = 0;
+				DCTembed(block1,payload,r,c,select,Qnum);res = 0;
 				block1Embedded = true;
 			}else if(!block2Embedded){
-				newDCT = DCTembed(block2,payload,r,c,select,Qnum);res = 0;
+				DCTembed(block2,payload,r,c,select,Qnum);res = 0;
 				block2Embedded = true;
 			}else{
-				newDCT = DCTembed(water,payload,r,c,select,Qnum);res = 40*Bpp;
+				res = DCTembed(water,payload,r,c,select,Qnum);//res = 40*Bpp;
 			}
 		}else{
 			newDCT = coeff;res = 0;
@@ -260,7 +260,7 @@ public class HideScheme2 {
 
 	}
 
-	private int[][] DCTembed(byte[] embed,int payload,int r,int c,int select,int Qnum){
+	private int DCTembed(byte[] embed,Integer payload,int r,int c,int select,int Qnum){
 		//系数小于0不动，等于0的话嵌入信息，大于0的右移1
 		int[][] res = new int[8][8];
 		int temp;int LSB;
@@ -310,7 +310,8 @@ public class HideScheme2 {
 
 		}
 		if(r==1 && c==1 && (select==0 || select==1) && Qnum==1){res[zigZag[startCoeff-1][0]][zigZag[startCoeff-1][1]] = Bpp;}
-		return res;
+		newDCT = res;
+		return payload;
 	}
 
 
