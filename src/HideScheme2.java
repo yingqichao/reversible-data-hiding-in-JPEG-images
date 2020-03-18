@@ -38,6 +38,7 @@ public class HideScheme2 {
 	private byte[] block2;
 	private boolean block1Embedded = false;
 	private boolean block2Embedded = false;
+	private boolean embedDisabled = false;
 	//time complexity observation
 	long writingData = 0;
 	long embeddingData = 0;
@@ -45,9 +46,9 @@ public class HideScheme2 {
 	private int OriBpp;
 	private int startCoeff = 18;
 
-	public HideScheme2(byte[] f,int[][] D0,int[][] D1,int[][] A0,int[][] A1,int[][] newA0,int[][] newA1,int[] tr,int[] s,int c,int dri,int Qt,int password){
+	public HideScheme2(boolean enable,byte[] f,int[][] D0,int[][] D1,int[][] A0,int[][] A1,int[][] newA0,int[][] newA1,int[] tr,int[] s,int c,int dri,int Qt,int password){
 		long startTime=System.currentTimeMillis();
-		T = new calctool();DRI=dri;
+		T = new calctool();DRI=dri;embedDisabled = enable;
 		Q=Qt;key = password;
 		im=f;//too space-consuming!!revised with bit manipulation
 		finale = new byte[im.length*4];
@@ -116,6 +117,7 @@ public class HideScheme2 {
 		int ref = (((color==3)?2:0)+ (int)Math.pow(Q,2));
 		block = row*col*ref;//(row*Q)*(col*Q);
 		Bpp = (int)Math.ceil((double)(water.length+8)/(5*(block-2)));OriBpp = Bpp;
+		int sumLen = 0;
 		for (int j = 0; j < row; j += 1) {
 			Bpp = (int)Math.ceil((double)(water.length+8-payload/8)/(5*(row-j)*col*ref));
 			for (int k = 0; k < col; k += 1) {
@@ -124,10 +126,10 @@ public class HideScheme2 {
 					preprocess = ( DRI!=0 && (j*col+k)!=0 && (j*col+k)%DRI==0 && zy == 1);
 					pointer = DCTread(pointer,0,preprocess);//great modification
 
-					newEmbedded = embeddedData(payload,temp,treeSelect[0],ex,j+1,k+1,zy,preprocess);//固定值6
-					payload = newEmbedded;
+					newEmbedded = embeddedData(payload,temp,treeSelect[0],ex|embedDisabled,j+1,k+1,zy,preprocess);//固定值6
+					payload = newEmbedded;sumLen+=temp.length();
 					moveForward = dataWriter(finale_pointer,preprocess);
-					finale_pointer += moveForward;
+					finale_pointer += moveForward;sumLen-=temp.length();
 					ex = payload>(water.length)*8;
 				}
 				if (color==3){
@@ -135,10 +137,10 @@ public class HideScheme2 {
 					for (int zz=1;zz<=2;zz++){
 						pointer = DCTread(pointer,zz,false);
 
-						newEmbedded = embeddedData(payload,temp,treeSelect[zz],ex,j+1,k+1,0,false);
-						payload = newEmbedded;
+						newEmbedded = embeddedData(payload,temp,treeSelect[zz],ex|embedDisabled,j+1,k+1,0,false);
+						payload = newEmbedded;sumLen+=temp.length();
 						moveForward = dataWriter(finale_pointer,false);
-						finale_pointer += moveForward;
+						finale_pointer += moveForward;sumLen-=temp.length();
 						ex = payload>(water.length)*8;
 					}
 				}
@@ -202,6 +204,8 @@ public class HideScheme2 {
 			}else{
 				res = DCTembed(water,payload,r,c,select,Qnum);//res = 40*Bpp;
 			}
+		}else if(embedDisabled){
+			newDCT = DCTmodify();res = 0;
 		}else{
 			newDCT = coeff;res = 0;
 		}
@@ -260,6 +264,23 @@ public class HideScheme2 {
 
 	}
 
+	private int[][] DCTmodify(){
+		for(int i=startCoeff;i<64;i++){
+			int b = coeff[zigZag[i][0]][zigZag[i][1]];
+			if(b>=2 || b<0){
+				if(b>=2)
+				    coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
+			}
+			else{
+//				temp.append((b==1)?1:0);
+				if(b==1)
+					coeff[zigZag[i][0]][zigZag[i][1]] = 0;
+			}
+
+		}
+		return coeff;
+	}
+
 	private int DCTembed(byte[] embed,Integer payload,int r,int c,int select,int Qnum){
 		//系数小于0不动，等于0的话嵌入信息，大于0的右移1
 		int[][] res = new int[8][8];
@@ -304,9 +325,9 @@ public class HideScheme2 {
 					res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
 				}
 			}
-//			else{
-//				res[zigZag[i][0]][zigZag[i][1]] = temp;
-//			}
+			else{
+				res[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]];
+			}
 
 		}
 		if(r==1 && c==1 && (select==0 || select==1) && Qnum==1){res[zigZag[startCoeff-1][0]][zigZag[startCoeff-1][1]] = Bpp;}

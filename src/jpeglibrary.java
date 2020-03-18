@@ -60,6 +60,20 @@ public class jpeglibrary {
 //		System.out.println("Preparation运行时间： "+(endTime-startTime)+"ms");
 	}
 
+	void init(String imagePath){
+//		newa0 = newA0;newa1 = newA1;
+//		T = new calctool();
+		d2 = new int[3][30];
+		size = new int[2];
+		treeSelect = new int[3];
+		Q = new int[3][2];
+//		Description = description;
+//		color=c;
+		this.imagePath=imagePath;
+//		key = password;selfie = fromPhoto;doodle = fromByteData;aux = auxInfo;
+		operation();
+	}
+
 	private void operation() {
 		int a;int b;
 		if(doodle!=null){
@@ -87,7 +101,7 @@ public class jpeglibrary {
 	public String hide(String foldname,String saveAs){
 		long startTime=System.currentTimeMillis();
 		byte[] emb_im;int Qt = Q[0][0];
-		hide = new HideScheme2(im,d0,d1,a0,a1,(newa0==null)?a0:newa0,(newa1==null)?a1:newa1,treeSelect,size,color,DRI,Qt,key);
+		hide = new HideScheme2(false,im,d0,d1,a0,a1,(newa0==null)?a0:newa0,(newa1==null)?a1:newa1,treeSelect,size,color,DRI,Qt,key);
 		if(selfie!=null){
 			water = selfie;
 		}
@@ -125,14 +139,32 @@ public class jpeglibrary {
 
 	public List<String> extract(String hidePath,String foldname){
 		int password = 0;
+		init(hidePath);
 		ExtractScheme exd = new ExtractScheme(hidePath,3);
 		List<byte[]> list = exd.extract(password);
+		byte[] emb_im = list.get(1);
+		dubious = new byte[head.length+emb_im.length+2];
+		System.arraycopy(head, 0, dubious, 0, head.length);
+		System.arraycopy(emb_im, 0, dubious, head.length, emb_im.length);
 		//恢复图像
-		String path = savePic((byte[])list.get(1),foldname,"recover");
+		String path = savePic(dubious,foldname,"recover");
 		byte[] extract = (byte[])list.get(0);
 		int imgLen = toLength(Arrays.copyOfRange(extract,1,4));
 		int wordLen = extract[4]&(0xff);int auxLen = extract[5]&(0xff);
-		dubious = Arrays.copyOfRange(extract,6,6+imgLen);
+
+		int Qt = Q[0][0];
+		hide = new HideScheme2(true,im,d0,d1,a0,a1,(newa0==null)?a0:newa0,(newa1==null)?a1:newa1,treeSelect,size,color,DRI,Qt,key);
+		emb_im = hide.hideinfo(water,word,aux);
+
+		if(changed){head=newHead;}
+		dubious = new byte[head.length+emb_im.length+2];
+		System.arraycopy(head, 0, dubious, 0, head.length);
+		System.arraycopy(emb_im, 0, dubious, head.length, emb_im.length);
+		long endTime=System.currentTimeMillis();
+
+		hidePath = savePic(dubious,foldname,"Extracted_new");
+
+//		dubious = Arrays.copyOfRange(extract,6,6+imgLen);
 //                hidePath[numIm] = SavePicIntoSystemAlbum(Arrays.copyOfRange(dubious, 0, dubious.length), "recover");
 		byte[] wordExtract = Arrays.copyOfRange(extract,6+imgLen,6+imgLen+wordLen);
 		String wordex = new String(wordExtract);

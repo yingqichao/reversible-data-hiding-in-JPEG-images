@@ -34,8 +34,8 @@ public class ExtractScheme {
 	private Map<String,Integer> d1 = new HashMap<>();
 	private Map<String,Integer> a0 = new HashMap<>();
 	private Map<String,Integer> a1 = new HashMap<>();
-	private Map<Integer,String> a0rev = new HashMap<>();
-	private Map<Integer,String> a1rev = new HashMap<>();
+	private Map<Integer,Integer> a0rev = new HashMap<>();//Map<Integer,String>
+	private Map<Integer,Integer> a1rev = new HashMap<>();
 	private int totalLen = 0;
 	private boolean block1Extracted = false;
 	private boolean block2Extracted = false;
@@ -154,14 +154,14 @@ public class ExtractScheme {
 
 		finale[finale_pointer_image]=(byte)255;finale_pointer_image++;
 		finale[finale_pointer_image]=(byte)217;finale_pointer_image++;
-		byte[] ori_data = new byte[head.length+finale.length];
-		System.arraycopy(head, 0, ori_data, 0, head.length);
-		System.arraycopy(finale, 0, ori_data, head.length, finale.length);
+//		byte[] ori_data = new byte[head.length+finale_pointer_image];
+//		System.arraycopy(head, 0, ori_data, 0, head.length);
+//		System.arraycopy(finale, 0, ori_data, head.length, finale_pointer_image);
 //		byte[] ori_image_data = Arrays.copyOfRange(finale, 0, finale_pointer_image);
 
 		List<byte[]> list = new LinkedList<>();
 		//这里的dubious是隐藏的信息，list：隐藏的信息+原图的byte[]
-		list.add(dubious);list.add(ori_data);
+		list.add(dubious);list.add(Arrays.copyOfRange(finale, 0, finale_pointer_image));
 
 		long endTime=System.currentTimeMillis();
 		System.out.println("提取信息总运行时间： "+(endTime-startTime)+"ms");
@@ -256,7 +256,7 @@ public class ExtractScheme {
 	public int Recode(StringBuilder emb,int select,int r,int c,int Qnum,boolean pre){
 		//这个函数是从HideScheme那边的embedData搬过来的，原理类似，仅保留编码部分的逻辑
 		long startTime=System.currentTimeMillis();
-		Map<Integer,String> acrev;
+		Map<Integer,Integer> acrev;
 		int runLength = 0;int codeLength;int res = 0;
 		int runCode;int huffCode;String code ;String temp ;
 		int[][] newDCT = coeff;
@@ -288,13 +288,13 @@ public class ExtractScheme {
 			}
 			else{
 				while(runLength>=16){
-					huffCode = T.str2int(acrev.get(16*15));
+					huffCode = acrev.get(16*15);
 					emb.append(int2String(huffCode&0xFFFF,huffCode>>16));
 //                    emb.append(huffCode);
 					runLength -= 16;
 				}
 				codeLength = int2String(Math.abs(newDCT[zigZag[j][0]][zigZag[j][1]])).length();runCode = runLength*16 + codeLength;
-				huffCode = T.str2int(acrev.get(runCode));
+				huffCode = acrev.get(runCode);
 
 				code = int2String(toPositiveRange(newDCT[zigZag[j][0]][zigZag[j][1]]),codeLength);
 				emb.append(int2String(huffCode&0xFFFF,huffCode>>16));
@@ -303,7 +303,7 @@ public class ExtractScheme {
 			}
 			//判断到最后一个DCT时是否还存在游程长度
 			if(j==63 && runLength!=0){
-				huffCode = T.str2int(acrev.get(0));
+				huffCode = acrev.get(0);
 				emb.append(int2String(huffCode&0xFFFF,huffCode>>16));
 			}
 		}
@@ -396,21 +396,15 @@ public class ExtractScheme {
 		for(int i=startCoeff;i<64;i++){
 			b = coeff[zigZag[i][0]][zigZag[i][1]];
 			if(b>=2 || b<0){
-				if(b>=2)
-				    coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
-//				else if(b<-2)	coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]+1;
+//				if(b>=2)
+//				    coeff[zigZag[i][0]][zigZag[i][1]] = coeff[zigZag[i][0]][zigZag[i][1]]-1;
 			}
 			else{
 				//提取隐藏并恢复
 				temp.append((b==1)?1:0);
-				if(b==1) coeff[zigZag[i][0]][zigZag[i][1]] = 0;
-//				if(b==-2)	coeff[zigZag[i][0]][zigZag[i][1]] = -1;
+//				if(b==1) coeff[zigZag[i][0]][zigZag[i][1]] = 0;
 			}
-//			b = Math.abs(coeff[zigZag[i][0]][zigZag[i][1]]);
-//			for(int j=0;j<Bpp;j++){
-//				a = (char) (((b&(0x01<<j))>>j)+48);
-//				temp.append(a);
-//			}
+
 		}
 		if(!block1Extracted){
 			//get Information and clear temp
@@ -752,9 +746,15 @@ public class ExtractScheme {
 		}
 	}
 
-	private void mapRevConstruction(Map<Integer,String> map,int[][] tree){
+//	private void mapRevConstruction(Map<Integer,String> map,int[][] tree){
+//		for(int i=0;i<tree[0].length;i++){
+//			map.put(tree[2][i],int2String(tree[1][i],tree[0][i]));
+//		}
+//	}
+
+	private void mapRevConstruction(Map<Integer,Integer> map,int[][] tree){
 		for(int i=0;i<tree[0].length;i++){
-			map.put(tree[2][i],int2String(tree[1][i],tree[0][i]));
+			map.put(tree[2][i],tree[1][i]+(tree[0][i]<<16));
 		}
 	}
 

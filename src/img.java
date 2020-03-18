@@ -12,7 +12,7 @@ public class img {
 //			water = readStream("Lena");}
 
 		String imagePath = "C:\\Users\\admin\\Desktop\\111\\123.jpg";//载体图像
-		String waterPath = "C:\\Users\\admin\\Desktop\\111\\water.txt";
+		String waterPath = "anymark Co.Ltd";
 		String foldname = "C:\\Users\\admin\\Desktop\\111";//将含密图像保存到这个目录下
 		String saveAs = "111_water.jpg";//含密名称
 
